@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-const TIMEOUT = time.Duration(10 * time.Second)
+const TIMEOUT = time.Duration(25 * time.Second)
 
 func main() {
 	argsWithoutProg := os.Args[1:]
@@ -236,19 +236,11 @@ func MakeXKRequest(client *http.Client) error {
 		return err
 	}
 
-	resp, err := client.Do(request)
+	_, err = client.Do(request)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	log.Println(string(body))
 
 	u, err := url.Parse("http://xk.ccnu.edu.cn")
 	if err != nil {

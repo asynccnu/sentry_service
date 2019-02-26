@@ -21,6 +21,7 @@ import (
 const TIMEOUT = time.Duration(25 * time.Second)
 
 func main() {
+	start := time.Now()
 	argsWithoutProg := os.Args[1:]
 
 	params, err := MakeAccountPreflightRequest()
@@ -60,7 +61,8 @@ func main() {
 		return
 	}
 
-	SendAlert("[华师匣子] 亲亲，学校系统一切正常")
+	elapsed := time.Since(start)
+	SendAlert("[华师匣子] 亲亲，学校系统一切正常。本次请求用时：" + elapsed.String())
 }
 
 type AccountReqeustParams struct {

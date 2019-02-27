@@ -12,30 +12,51 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/net/publicsuffix"
 )
 
-const TIMEOUT = time.Duration(25 * time.Second)
+var retryCount = 1
+
+var timeHeuristic = time.Duration(8 * time.Second)
+var longTimeHeuristic = time.Duration(30 * time.Second)
+var longerTimeHeuristic = time.Duration(100 * time.Second)
+
+var TIMEOUT = timeHeuristic
 
 func main() {
+	for i := 0; i < 3; i++ {
+		if err := MakeRequest("第" + strconv.Itoa(i+1) + "次尝试"); err == nil {
+			return
+		} else {
+			if i == 0 {
+				TIMEOUT = longTimeHeuristic
+			} else {
+				TIMEOUT = longerTimeHeuristic
+			}
+		}
+	}
+}
+
+func MakeRequest(count string) error {
 	start := time.Now()
 	argsWithoutProg := os.Args[1:]
-
+	log.Println(string(count))
 	params, err := MakeAccountPreflightRequest()
 	if err != nil {
 		log.Print(err)
-		SendAlert("[匣子报警] 亲亲，这边建议您检查一下 account.ccnu.edu.cn 是否可以打开呢，错误原因：" + err.Error())
-		return
+		SendAlert("[匣子报警][" + string(count) + "] 亲亲，这边建议您检查一下 account.ccnu.edu.cn 是否可以打开呢，错误原因：" + err.Error())
+		return err
 	}
 
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		log.Print(err)
-		SendAlert("[匣子报警] 亲亲，这边建议您检查一下 sentry_service 状态呢，错误原因：" + err.Error())
-		return
+		SendAlert("[匣子报警][" + string(count) + "] 亲亲，这边建议您检查一下 sentry_service 状态呢，错误原因：" + err.Error())
+		return err
 	}
 
 	client := http.Client{
@@ -45,30 +66,31 @@ func main() {
 
 	if err := MakeAccountRequest(argsWithoutProg[0], argsWithoutProg[1], params, &client); err != nil {
 		log.Println(err.Error())
-		SendAlert("[匣子报警] 亲亲，这边建议您检查一下 account.ccnu.edu.cn 的登录呢，错误原因：" + err.Error())
-		return
+		SendAlert("[匣子报警][" + string(count) + "] 亲亲，这边建议您检查一下 account.ccnu.edu.cn 的登录呢，错误原因：" + err.Error())
+		return err
 	}
 
 	if err := MakeXKRequest(&client); err != nil {
 		log.Println(err.Error())
-		SendAlert("[匣子报警] 亲亲，这边建议您检查一下 xk.ccnu.edu.cn 的登录呢，错误原因：" + err.Error())
-		return
+		SendAlert("[匣子报警][" + string(count) + "] 亲亲，这边建议您检查一下 xk.ccnu.edu.cn 的登录呢，错误原因：" + err.Error())
+		return err
 	}
 
 	if err := MakeGradeRequest(&client); err != nil {
 		log.Println(err.Error())
-		SendAlert("[匣子报警] 亲亲，这边建议您检查一下教务系统成绩查询是否正常呢，错误原因：" + err.Error())
-		return
+		SendAlert("[匣子报警][" + string(count) + "] 亲亲，这边建议您检查一下教务系统成绩查询是否正常呢，错误原因：" + err.Error())
+		return err
 	}
 
 	if err := MakeTableRequest(&client); err != nil {
 		log.Println(err.Error())
-		SendAlert("[匣子报警] 亲亲，这边建议您检查一下教务系统课表查询是否正常呢，错误原因：" + err.Error())
-		return
+		SendAlert("[匣子报警][" + string(count) + "] 亲亲，这边建议您检查一下教务系统课表查询是否正常呢，错误原因：" + err.Error())
+		return err
 	}
 
 	elapsed := time.Since(start)
-	SendAlert("[华师匣子] 亲亲，学校系统一切正常。本次请求用时：" + elapsed.String())
+	SendAlert("[华师匣子][" + string(count) + "] 亲亲，学校系统一切正常。本次请求用时：" + elapsed.String())
+	return nil
 }
 
 func SendAlert(text string) {

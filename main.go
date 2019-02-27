@@ -61,28 +61,14 @@ func main() {
 		return
 	}
 
+	if err := MakeTableRequest(&client); err != nil {
+		log.Println(err.Error())
+		SendAlert("[匣子报警] 亲亲，这边建议您检查一下教务系统课表查询是否正常呢，错误原因：" + err.Error())
+		return
+	}
+
 	elapsed := time.Since(start)
 	SendAlert("[华师匣子] 亲亲，学校系统一切正常。本次请求用时：" + elapsed.String())
-}
-
-type AccountReqeustParams struct {
-	lt         string
-	execution  string
-	_eventId   string
-	submit     string
-	JSESSIONID string
-}
-
-type Grade struct {
-	Items []*GradeItem `json:"items" binding:"required"`
-}
-
-type GradeItem struct {
-	Kcmc   string `json:"kcmc" binding:"required"`
-	Kcxzmc string `json:"kcxzmc" binding:"required"`
-	Cj     string `json:"cj" binding:"required"`
-	Jsxm   string `json:"jsxm" binding:"required"`
-	Kclbmc string `json:"kclbmc" binding:"required"`
 }
 
 func SendAlert(text string) {
@@ -300,6 +286,48 @@ func MakeGradeRequest(client *http.Client) error {
 
 	if len(grade.Items) == 0 {
 		return errors.New("empty grade list")
+	}
+
+	return nil
+}
+
+// xk.ccnu.edu.cn 获取课表
+func MakeTableRequest(client *http.Client) error {
+	v := url.Values{}
+
+	v.Set("xnm", "2018")
+	v.Set("xqm", "12")
+
+	request, err := http.NewRequest("POST", "http://xk.ccnu.edu.cn/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", strings.NewReader(v.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
+	request.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	request.Header.Set("X-Requested-With", "XMLHttpRequest")
+	request.Header.Set("Origin", "http://xk.ccnu.edu.cn")
+	request.Header.Set("Host", "xk.ccnu.edu.cn")
+	request.Header.Set("Referer", "http://xk.ccnu.edu.cn//cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005&layout=default&su=2016210942")
+
+	resp, err := client.Do(request)
+	if err != nil {
+		log.Print(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	var table = &Table{}
+
+	if err := json.Unmarshal(body, &table); err != nil {
+		log.Print(err)
+		return err
+	}
+
+	if len(table.KbList) == 0 {
+		return errors.New("empty table list")
 	}
 
 	return nil

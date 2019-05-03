@@ -42,7 +42,7 @@ func main() {
 }
 
 func MakeRequest(count string) error {
-	start := time.Now()
+	// start := time.Now()
 	argsWithoutProg := os.Args[1:]
 	log.Println(string(count))
 	params, err := MakeAccountPreflightRequest()
@@ -88,12 +88,13 @@ func MakeRequest(count string) error {
 		return err
 	}
 
-	elapsed := time.Since(start)
-	SendAlert("[华师匣子][" + string(count) + "] 亲亲，学校系统一切正常。本次请求用时：" + elapsed.String())
+	// elapsed := time.Since(start)
+	// SendAlert("[华师匣子][" + string(count) + "] 亲亲，学校系统一切正常。本次请求用时：" + elapsed.String())
 	return nil
 }
 
 func SendAlert(text string) {
+	log.Println("发送劲爆")
 	message := map[string]interface{}{
 		"msgtype": "text",
 		"text": map[string]string{

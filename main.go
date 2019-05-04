@@ -33,12 +33,12 @@ func main() {
 			log.Println("请求成功！")
 			return
 		} else {
-			time.Sleep(time.Duration(time.Second * 3))
 			if i == 0 {
 				TIMEOUT = longTimeHeuristic
 			} else {
 				TIMEOUT = longerTimeHeuristic
 			}
+			time.Sleep(TIMEOUT)
 			if i == 2 {
 				SendAlert("[匣子报警][" + position + "] 亲亲，这边建议您检查一下 account.ccnu.edu.cn 是否可以打开呢，错误原因：" + err.Error())
 			}

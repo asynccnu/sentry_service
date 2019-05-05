@@ -28,7 +28,7 @@ var longerTimeHeuristic = time.Duration(100 * time.Second)
 var TIMEOUT = timeHeuristic
 
 func main() {
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 10; i++ {
 		if err, position := MakeRequest("第" + strconv.Itoa(i+1) + "次尝试"); err == nil {
 			log.Println("请求成功！")
 			return
@@ -39,7 +39,7 @@ func main() {
 				TIMEOUT = longerTimeHeuristic
 			}
 			time.Sleep(TIMEOUT)
-			if i == 2 {
+			if i == 9 {
 				SendAlert("[匣子报警][" + position + "] 亲亲，这边建议您检查一下 account.ccnu.edu.cn 是否可以打开呢，错误原因：" + err.Error())
 			}
 		}

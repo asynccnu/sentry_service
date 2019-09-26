@@ -28,6 +28,8 @@ var longerTimeHeuristic = time.Duration(100 * time.Second)
 var TIMEOUT = timeHeuristic
 
 func main() {
+	argsWithoutProg := os.Args[1:]
+	fmt.Println("DingTalk URL:", argsWithoutProg[2])
 	for i := 0; i < 10; i++ {
 		if err, position := MakeRequest("第" + strconv.Itoa(i+1) + "次尝试"); err == nil {
 			log.Println("请求成功！")
@@ -98,7 +100,9 @@ func SendAlert(text string) {
 		log.Println(err)
 	}
 
-	_, err = http.Post("https://oapi.dingtalk.com/robot/send?access_token=0fc384d57235fdb1cc6dfa83408d8154507d0699f3649589dd5a7898012ee690", "application/json", bytes.NewBuffer(bytesRepresentation))
+	argsWithoutProg := os.Args[1:]
+
+	_, err = http.Post(argsWithoutProg[2], "application/json", bytes.NewBuffer(bytesRepresentation))
 	if err != nil {
 		log.Println(err)
 	}
